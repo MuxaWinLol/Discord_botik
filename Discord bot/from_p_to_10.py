@@ -1,4 +1,5 @@
 def from_p_to_10(inp, cc):
+    # Перевод из P сс в 10
     if '.' in inp:
         inp = inp.split('.')
         whole = float(int(inp[0], cc))

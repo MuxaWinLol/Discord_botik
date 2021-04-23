@@ -113,7 +113,7 @@ class Tree:
         elif width_right < width_left:
             right += [height_right * ' '] * (width_left - width_right)
         return [line_left_number, line_without_number] + [a + len_value * ' ' + x for a, x in zip(left, right)], \
-            height_left + height_right + len_value, max(width_left, width_right) + 2, height_left + len_value // 2
+               height_left + height_right + len_value, max(width_left, width_right) + 2, height_left + len_value // 2
 
     # Нужна высота для определения фактора баланса
     def height(self, node) -> int:

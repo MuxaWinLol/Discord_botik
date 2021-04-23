@@ -1,17 +1,8 @@
-# Создание списков
-# .list {listname} create  {args}
-# .list {listname} add  {args}
-# .list {listname} remove  {arg}
-# .list {listname} removeat  {ind}
-# .list {listname} insert  {ind} {arg}
-# .list {listname} delete
-# .list {listname} author
-# .list {filename}
-
 import os
 
 
 def read_list(listname):
+    # Чтение списка
     try:
         with open(f"lists\\{listname}.txt", "r", encoding="UTF-8") as fl:
             fl.readline()
@@ -21,7 +12,7 @@ def read_list(listname):
 
 
 def rewrite_list(args: tuple):
-    # args = (filename, (id, username), [contents])
+    # Переписать список
     try:
         with open(f"lists\\{args[0]}.txt", "r", encoding="UTF-8") as fl:
             priv = fl.readline().strip()
@@ -37,7 +28,7 @@ def rewrite_list(args: tuple):
 
 
 def add_to_list(args: tuple):
-    # args = (filename, id, [contents])
+    # Добавить элементы в список
     try:
         with open(f"lists\\{args[0]}.txt", "r", encoding="UTF-8") as fl:
             priv = fl.readline().strip()
@@ -54,6 +45,7 @@ def add_to_list(args: tuple):
 
 
 def get_list_author(listname):
+    # Получить ник автора
     try:
         with open(f"lists\\{listname}.txt", "r", encoding="UTF-8") as fl:
             fl.readline()
@@ -63,6 +55,7 @@ def get_list_author(listname):
 
 
 def create_list(listname, author, priv):
+    # Создать список
     if listname != "help":
         pth = f"lists\\{listname}.txt"
 
@@ -75,6 +68,7 @@ def create_list(listname, author, priv):
 
 
 def delete_list(listname, author):
+    # Удалить список
     pth = f"lists\\{listname}.txt"
     with open(f"lists\\{listname}.txt", "r", encoding="UTF-8") as fl:
         priv = fl.readline().strip()
@@ -87,6 +81,7 @@ def delete_list(listname, author):
 
 
 def insert_list(listname, ind, arg, user):
+    # Вставка элементов в список
     resp = read_list(listname, user)
     if isinstance(resp, tuple):
         auth, lst = resp
@@ -98,6 +93,7 @@ def insert_list(listname, ind, arg, user):
 
 
 def removeat_list(listname, ind, user):
+    # Удаление элементов с индексом ind
     resp = read_list(listname, user)
     if isinstance(resp, tuple):
         auth, lst = resp
@@ -109,6 +105,7 @@ def removeat_list(listname, ind, user):
 
 
 def remove_list(listname, args, user):
+    # Удаление элементов из списка
     resp = read_list(listname, user)
     if isinstance(resp, tuple):
         auth, lst = resp
@@ -117,13 +114,3 @@ def remove_list(listname, args, user):
         return "`done`"
     else:
         return resp
-
-
-# a = read_list("anime", None)
-# print(a)
-# rewrite_list(("anime", ("31832232592392544", "MuxaL#1619"), a[1]))
-# add_to_list(("anime", "31832232592392544", ["123"]))
-# print(get_list_author("anime"))
-# print(create_list("dd", ("31832232592392544", "MuxaL#1619"), "private"))
-# print(delete_list("dd", "31832232592392544"))
-# print(insert_list("anime", 2, "твоя мама", ("31832232592392544", "MuxaL#1619")))

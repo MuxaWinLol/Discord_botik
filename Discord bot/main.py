@@ -20,12 +20,14 @@ from from_10_to_p import from_10_to_p
 from from_p_to_10 import from_p_to_10
 from lists import *
 
+# Логирование
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
+# Подгрузка данных из файла config.json
 with open("config.json", "r", encoding="UTF-8") as fl:
     data = json.load(fl)
 client = commands.Bot(command_prefix=data["prefix"])
@@ -34,19 +36,14 @@ genius = lyricsgenius.Genius(data["genius"])
 wikipedia.set_lang("ru")
 
 
-# def change_prefix(new_pref):
-#     global data
-#     data["prefix"] = new_pref
-#     with open("config.json", "w", encoding="UTF-8") as fl1:
-#         fl1.write(json.dumps(data))
-
-
 def wiki(req):
+    # Получает статью из википедии
     article = wikipedia.page(req)
     return article.title, article.page
 
 
 def isint(inp: str) -> bool:
+    # Является ли число целым
     try:
         int(inp)
         return True
@@ -55,6 +52,7 @@ def isint(inp: str) -> bool:
 
 
 def isfloat(inp: str) -> bool:
+    # Является ли число вещественным
     try:
         float(inp)
         return True
@@ -63,11 +61,13 @@ def isfloat(inp: str) -> bool:
 
 
 def pprint(mes):
+    # Красивая печать
     return [f"{3 * '`'}\n{mes[1980 * i:1980 * (i + 1)]}{3 * '`'}"
             for i in range(math.ceil(len(mes) / 1980))]
 
 
 def tenorgif(req_mes, limit=10):
+    # Получает gif-картинку
     try:
         tenor_key = data["tenor"]
         r = requests.get("https://api.tenor.com/v1/anonid?key=%s" % tenor_key)
@@ -89,6 +89,7 @@ def tenorgif(req_mes, limit=10):
 
 @client.event
 async def on_ready():
+    # Действия при запуске бота
     await client.change_presence(status=discord.Status.idle, activity=discord.Game("Ledivee kinda sus ngl."))
     print(f'{client.user} has connected to Discord!')
     guilds = client.guilds
@@ -99,19 +100,24 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
+    # Действия при сообщении
     if message.author.bot:
         return
     _usr = (str(message.author.id), message.author.name + "#" + message.author.discriminator)
-    isadmin = message.author.id in [318322325923692544, 386068088644304918] or \
-              message.author.guild_permissions.administrator
+    # Есть ли у пользователя роль админа
+    isadmin = message.author.guild_permissions.administrator
+
     pref = data["prefix"]
     channel = message.channel
     text = message.content
+
+    # Комманды бота
     if text == "1000 - 7" or text == "1000-7" and isadmin:
         await channel.send("```" + "\n".join([f"{1000 - i} - {7} = {1000 - i - 7}"
                                               for i in range(0, 1000, 7)]) + "```")
 
     if text.startswith(pref):
+        # Получить аватарки упомянутых пользователей или ролей
         if text.startswith(pref + "av"):
             args = message.mentions
             for i in message.role_mentions:
@@ -125,24 +131,31 @@ async def on_message(message):
                     await channel.send(i.avatar_url)
 
         elif text == pref + "latency":
+            # Задержка до сервера
             await channel.send(latency())
 
+        elif text == pref + "help":
+            # Помощь
+            pass
+
         elif text.startswith(pref + "send_a_cat"):
+            # Отправить случайного котика
             await channel.send(send_a_cat())
 
         elif text == pref + "pog":
+            # PoGgErS
             await channel.send("".join([i if choice([0, 1]) else i.capitalize() for i in "poggers"]))
 
         elif text.startswith(pref + "send_nudes") and isadmin:
+            # Кхм...
             await channel.send(send_nudes())
 
         elif text.startswith(pref + "stop") and isadmin:
-            await stop(channel)
-
-        elif text.startswith(pref + "changeprefix"):
+            # Закончить сессию
             await stop(channel)
 
         elif text.startswith(pref + "clear") and isadmin:
+            # Очистить первык N сообщений
             lim = text.split()
             if len(lim) > 1 and lim[1].isdigit():
                 await clear(channel, int(lim[1]))
@@ -150,6 +163,7 @@ async def on_message(message):
                 await clear(channel)
 
         elif text.startswith(pref + "song"):
+            # Прислать информацию о запрошенной песне
             args = text.split()
             if len(args) > 1:
                 for item in song(text.split()[1:]):
@@ -159,6 +173,7 @@ async def on_message(message):
                                    " {artist}\nor\n.song {song name}```")
 
         elif text.startswith(pref + "artist"):
+            # Прислать информацию о запрошенном музыкальном исполнителе
             args = text.split()
             if len(args) > 1:
                 for item in artist(text.split()[1:]):
@@ -167,6 +182,7 @@ async def on_message(message):
                 await channel.send("```Wrong artist name.\n.artist {artist}```")
 
         elif text.startswith(pref + "tree"):
+            # Построить бинарное дерево (небалансированное и сбалансированное)
             args = text.split()
             if len(args) > 1:
                 f = False
@@ -183,14 +199,17 @@ async def on_message(message):
                 await channel.send("```No arguments to create a binary tree```")
 
         elif text.startswith(pref + "lichess"):
+            # Делает запрос к lichess
             args = text.split()
             if len(args) > 1:
                 if args[1] == "user" and len(args) > 2:
+                    # Запрос о пользователе
                     await channel.send(liuser(args[2]))
             else:
                 await channel.send("```No arguments to create a binary tree```")
 
         elif text.startswith(pref + "savechat"):
+            # Сохраняет последние N сообщений из чата
             args = text.split()
             if len(args) > 1 and args[1].isdigit():
                 await savechat(channel, int(args[1]))
@@ -198,6 +217,7 @@ async def on_message(message):
                 await savechat(channel)
 
         elif text.startswith(pref + "ima_ghoul") or text.startswith(pref + "i_am_a_ghoul"):
+            # Случайная gif-картинка канеки
             args = text.split()
             if len(args) > 1 and args[1].isdigit():
                 await channel.send(ima_ghoul(int(args[1])))
@@ -205,6 +225,7 @@ async def on_message(message):
                 await channel.send(ima_ghoul())
 
         elif text.startswith(pref + "ss"):
+            # Перевод между системами счисления
             args = text.split()
             if len(args) == 4 and args[1].isdigit() and 1 < int(args[1]) < 36 \
                     and args[2].isdigit() and 1 < int(args[2]) < 36:
@@ -213,6 +234,7 @@ async def on_message(message):
                 await channel.send("`СОСИ ЖЁПУ!!11!1!11`")
 
         elif text.startswith(pref + "bincode") or text.startswith(pref + "bin_code"):
+            # Двоичный код числа
             args = text.split()
             if len(args) > 1 and isint(args[1]):
                 if len(args) > 2:
@@ -240,6 +262,7 @@ async def on_message(message):
                 await channel.send("`СОСИ ЖЁПУ!!11!1!11`")
 
         elif text.startswith(pref + "in_to_post") or text.startswith(pref + "in2post"):
+            # Перевод из инфиксной в постфиксную форму
             ops = "+-*/()"
             for i in ops:
                 text = text.replace(i, " " + i + " ")
@@ -254,6 +277,7 @@ async def on_message(message):
                 await channel.send("`СОСИ ЖЁПУ!!11!1!11`")
 
         elif text.startswith(pref + "post"):
+            # Вычиление в постфиксной форме
             ops = "+-*/"
             for i in ops:
                 text = text.replace(i, " " + i + " ")
@@ -266,6 +290,7 @@ async def on_message(message):
                     await channel.send("`СОСИ ЖЁПУ!!11!1!11`")
 
         elif text.startswith(pref + "pref"):
+            # Вычиление в префиксной форме
             ops = "+-*/"
             for i in ops:
                 text = text.replace(i, " " + i + " ")
@@ -278,6 +303,7 @@ async def on_message(message):
                     await channel.send("`СОСИ ЖЁПУ!!11!1!11`")
 
         elif text.startswith(pref + "wiki"):
+            # Запрос из википедии
             args = text.split()
             if len(args) > 1:
                 for item in pprint(wiki(" ".join(args[1:]))):
@@ -286,6 +312,7 @@ async def on_message(message):
                 await channel.send("`СОСИ ЖЁПУ!!11!1!11`")
 
         elif text.startswith(pref + "list"):
+            # Списки
             args = text.split()
             if len(args) > 2:
                 if args[2] == "create":
@@ -317,25 +344,21 @@ async def on_message(message):
                     outp = args[1] + ":\n\n" + "\n".join([f"{ind + 1}. {i}" for ind, i in enumerate(lst)])
                     for item in pprint(outp):
                         await channel.send(item)
-        # elif text.startswith(pref + "change_prefix"):
-        #     args = text.split()
-        #     if len(args) > 1:
-        #         change_prefix(args[1])
-        #         await channel.send(f"`prefix was successfully set to {args[1]}`")
-        #     else:
-        #         await channel.send("`no prefix argument was given`")
 
 
 def latency():
+    # Задержка до сервера
     return f"Latency: {round(client.latency * 1000)} ms"
 
 
 async def stop(channel):
+    # Закончить сессию
     await channel.purge(limit=1)
     await client.close()
 
 
 async def clear(channel, amount=100):
+    # Очистить первык N сообщений
     try:
         await channel.purge(limit=(amount + 1))
     except Exception as e:
@@ -343,6 +366,7 @@ async def clear(channel, amount=100):
 
 
 def song(songinfo):
+    # Прислать информацию о запрошенной песне
     try:
         if ":" in songinfo:
             div = songinfo.index(":")
@@ -367,6 +391,7 @@ def song(songinfo):
 
 
 def artist(artistname):
+    # Прислать информацию о запрошенном музыкальном исполнителе
     try:
         limit = 3
         artistname = " ".join(artistname)
@@ -393,6 +418,7 @@ def artist(artistname):
 
 
 def tree(keys):
+    # Построить бинарное дерево (небалансированное и сбалансированное)
     inp = [int(x) for x in keys]
     b1 = Tree(inp[0])
     b2 = Tree(inp[0])
@@ -413,6 +439,7 @@ def tree(keys):
 
 
 async def savechat(ctx, limit=1000):
+    # Сохраняет последние N сообщений из чата
     try:
         dt = pd.DataFrame(columns=['content', 'time', 'author'])
         flag = 0
@@ -437,6 +464,7 @@ async def savechat(ctx, limit=1000):
 
 
 def liuser(*others):
+    # Данные о пользователе lichess
     _user = lichess.api.user(" ".join(others))
     return f"{3 * '`'}" \
            f"{_user['username']} (Currently {'online' if _user['online'] else 'offline'}).\n" \
@@ -454,10 +482,13 @@ def liuser(*others):
 
 
 def send_a_cat():
+    # Отправить случайного котика
+
     return get("https://api.thecatapi.com/v1/images/search").json()[0]["url"]
 
 
 def send_nudes():
+    # Кхм-Кхм...
     lst = [
         "imgur.com/a/c4kDjce",
         "imgur.com/lzQbq6F",
@@ -468,6 +499,7 @@ def send_nudes():
 
 
 def ima_ghoul(limit=30):
+    # Случайная gif-картинка канеки
     kaneki = tenorgif("kaneki", limit)
     if kaneki is not None:
         return kaneki
@@ -475,10 +507,12 @@ def ima_ghoul(limit=30):
 
 
 def ss(ss1, ss2, n):
+    # Перевод между системами счисления
     return from_10_to_p(from_p_to_10(n, ss1), ss2)
 
 
 def bin_code(n, am=8):
+    # Двоичный код числа
     pref = "0" if n >= 0 else "1"
     num = bin(abs(n))[2:]
     if n > 2 ** (am - 1) - 1 or n < -(2 ** (am - 1)):
@@ -495,6 +529,7 @@ def bin_code(n, am=8):
 
 
 def post(inp):
+    # Вычиление в постфиксной форме
     stack = []
     i = 0
     for x in inp:
@@ -521,6 +556,7 @@ def post(inp):
 
 
 def infix_to_postfix(infixexpr):
+    # Перевод из инфиксной в постфиксную форму
     prec = dict()
     prec["*"] = 3
     prec["/"] = 3
@@ -553,6 +589,7 @@ def infix_to_postfix(infixexpr):
 
 
 def prefix(tokens):
+    # Вычиление в префиксной форме
     token = tokens.popleft()
     if token == '+':
         return prefix(tokens) + prefix(tokens)

@@ -2,13 +2,15 @@ from decimal import Decimal
 
 
 def for_integer(N, base):
+    # Для чисел
     if not hasattr(for_integer, 'table'):
         for_integer.table = '0123456789ABCDEF'
     x, y = divmod(N, base)
     return for_integer(x, base) + for_integer.table[y] if x else for_integer.table[y]
 
 
-def for_period(some_part, degree):
+def for_period(some_part):
+    # Для периодов
     znam = ''
     chicl = ['', '']
     plus = '0'
@@ -28,6 +30,7 @@ def for_period(some_part, degree):
 
 
 def from_10_to_p(number, cc):
+    # Перевод из 10 сс в P
     number = number.split(".")
     result = ''
     ind = 0
@@ -36,7 +39,7 @@ def from_10_to_p(number, cc):
         return for_integer(int(number[0]), cc)
     else:
         if '(' in number[1]:
-            float_part = for_period('0.' + number[1], cc)
+            float_part = for_period('0.' + number[1])
         else:
             float_part = Decimal('0.' + number[1])
         m = [float_part]
@@ -62,4 +65,3 @@ def from_10_to_p(number, cc):
             return for_integer(int(number[0]), cc) + '.' + result
         return for_integer(int(number[0]), cc)
     return for_integer(int(number[0]), cc) + '.' + result[:ind] + '(' + result[ind:] + ')'
-
