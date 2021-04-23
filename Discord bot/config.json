@@ -1,0 +1,6 @@
+{
+  "token": "Discord Bot Token",
+  "prefix": "Prefix",
+  "genius": "Genius API Token",
+  "tenor": "Trnor API Token"
+}
