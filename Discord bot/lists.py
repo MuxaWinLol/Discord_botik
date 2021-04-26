@@ -35,9 +35,8 @@ def add_to_list(args: tuple):
             auth = fl.readline().strip().split()[0]
             b = fl.readline().strip()
         with open(f"lists\\{args[0]}.txt", "a", encoding="UTF-8") as fl:
-            if priv == "public" or priv == "private" and args[1][0] == auth:
-                r = '%2C'.join(args[2])
-                fl.write(("%2C" if b else "") + r)
+            if priv == "public" or (priv == "private" and args[1][0] == auth):
+                fl.write(("%2C" if b else "") + args[2])
                 return "done"
             return "`privacy error`"
     except FileNotFoundError:
@@ -104,12 +103,12 @@ def removeat_list(listname, ind, user):
         return resp
 
 
-def remove_list(listname, args, user):
+def remove_list(listname, arg, user):
     # Удаление элементов из списка
     resp = read_list(listname, user)
     if isinstance(resp, tuple):
         auth, lst = resp
-        lst = [i for i in lst if i not in args]
+        lst = [i for i in lst if i != arg]
         rewrite_list((listname, user, lst))
         return "`done`"
     else:

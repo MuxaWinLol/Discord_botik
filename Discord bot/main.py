@@ -26,20 +26,19 @@ logger.setLevel(logging.DEBUG)
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
-
 # Подгрузка данных из файла config.json
 with open("config.json", "r", encoding="UTF-8") as fl:
     data = json.load(fl)
 client = commands.Bot(command_prefix=data["prefix"])
 genius = lyricsgenius.Genius(data["genius"])
 
-wikipedia.set_lang("ru")
+wikipedia.set_lang("en")
 
 
 def wiki(req):
-    # Получает статью из википедии
-    article = wikipedia.page(req)
-    return article.title, article.page
+    # Получает обобщение статьи из википедии
+    article = wikipedia.summary(req, sentences=5)
+    return article
 
 
 def isint(inp: str) -> bool:
@@ -60,7 +59,7 @@ def isfloat(inp: str) -> bool:
         return False
 
 
-def pprint(mes):
+def prettyprint(mes):
     # Красивая печать
     return [f"{3 * '`'}\n{mes[1980 * i:1980 * (i + 1)]}{3 * '`'}"
             for i in range(math.ceil(len(mes) / 1980))]
@@ -112,7 +111,7 @@ async def on_message(message):
     text = message.content
 
     # Комманды бота
-    if text == "1000 - 7" or text == "1000-7" and isadmin:
+    if text.replace(" ",  "") == "1000-7":
         await channel.send("```" + "\n".join([f"{1000 - i} - {7} = {1000 - i - 7}"
                                               for i in range(0, 1000, 7)]) + "```")
 
@@ -130,35 +129,81 @@ async def on_message(message):
                     await channel.send(f"`{i.nick or i.name}'s avatar:`")
                     await channel.send(i.avatar_url)
 
+        elif text.startswith(pref + "stop") and _usr[0] == "318322325923692544":
+            # Закончить сессию (млжет только тот, чей id в условии)
+            if len(text.split()) > 1 and text.split()[1] == "help":
+                await channel.send(f"```{pref}stop```")
+            else:
+                await stop(channel)
+
         elif text == pref + "latency":
             # Задержка до сервера
-            await channel.send(latency())
+            if len(text.split()) > 1 and text.split()[1] == "help":
+                await channel.send(f"```{pref}latency```")
+            else:
+                await channel.send(latency())
 
         elif text == pref + "help":
             # Помощь
-            pass
+            lst = [[("help",), "helps with commands", False],
+                   [("latency",), "sends bot's latency", False],
+                   [("clear",), "clears last N messages", True],
+                   [("savechat",), "saves last N messages in chat", True],
+                   [("av",), "sends avatars of all mentioned people or roles", False],
+                   [("list",), "works with lists", False],
+                   [("song",), "sends info about the song", False],
+                   [("artist",), "sends info about the artist", False],
+                   [("lichess",), "works with lichess api", False],
+                   [("wiki",), "gets a brief summary of an article", False],
+                   [("ss",), "translates numbers between number systems", False],
+                   [("bincode",), "returns binary code of a number", False],
+                   [("tree",), "builds and sends 2 binary trees: non- and balanced", False],
+                   [("in_to_post", "in2post"), "infix format to postfix format", False],
+                   [("post",), "evaluates the expression in postfix format", False],
+                   [("pref",), "evaluates the expression in prefix format", False],
+                   [("pog",), "responds with 'poggers' in random encapsulation", False],
+                   [("send_a_cat",), "sends random cat pic / gif", False],
+                   [("i_am_a_ghoul", "ima_ghoul"), "sends random kaneki gif", False],
+                   [("send_nudes",), "sends a random Khovanskiy Maksim pic", True]]
+
+            outp = ""
+            for i in lst:
+                outp += f"{pref}{i[0][0]:16} —  {i[1]} {'(fa)' * i[2]}" + "\n" * (len(i[0]) > 1) + \
+                        "\n".join(["   > " + pref + j for j in i[0][1:]]) + "\n"
+            for item in prettyprint(f"Form: command_name — description\n\n{outp}1000 - 7          "
+                                    f"—  counts down from 1000 to -1 with the step of 7 "
+                                    f"\n\n(fa) = 'only for admins'"):
+                await channel.send(item)
 
         elif text.startswith(pref + "send_a_cat"):
             # Отправить случайного котика
+            if len(text.split()) > 1 and text.split()[1] == "help":
+                await channel.send(f"```{pref}send_a_cat```")
             await channel.send(send_a_cat())
 
-        elif text == pref + "pog":
+        elif text.startswith(pref + "pog"):
             # PoGgErS
-            await channel.send("".join([i if choice([0, 1]) else i.capitalize() for i in "poggers"]))
+            if len(text.split()) > 1 and text.split()[1] == "help":
+                await channel.send(f"```{pref}pog```")
+            else:
+                await channel.send("".join([i if choice([0, 1]) else i.capitalize() for i in "poggers"]))
 
         elif text.startswith(pref + "send_nudes") and isadmin:
             # Кхм...
+            if len(text.split()) > 1 and text.split()[1] == "help":
+                await channel.send(f"```{pref}send_nudes```")
             await channel.send(send_nudes())
-
-        elif text.startswith(pref + "stop") and isadmin:
-            # Закончить сессию
-            await stop(channel)
 
         elif text.startswith(pref + "clear") and isadmin:
             # Очистить первык N сообщений
             lim = text.split()
-            if len(lim) > 1 and lim[1].isdigit():
-                await clear(channel, int(lim[1]))
+            if len(lim) > 1:
+                if lim[1] == "help":
+                    await channel.send(f"```{pref}clear {{limit}}```")
+                elif lim[1].isdigit():
+                    await clear(channel, int(lim[1]))
+                else:
+                    await channel.send(f"```Argument isn't a number.\n{pref}clear {{limit}}```")
             else:
                 await clear(channel)
 
@@ -166,53 +211,73 @@ async def on_message(message):
             # Прислать информацию о запрошенной песне
             args = text.split()
             if len(args) > 1:
-                for item in song(text.split()[1:]):
-                    await channel.send(item)
+                if args[1] == "help":
+                    await channel.send(f"```{pref}song {{song name}} : {{artist}}\nor\n{pref}song {{song name}}```")
+                else:
+                    for item in song(text.split()[1:]):
+                        await channel.send(item)
             else:
-                await channel.send("```Wrong song or name.\n.song {song name} :"
-                                   " {artist}\nor\n.song {song name}```")
+                await channel.send(f"```Wrong song or name.\n{pref}song {{song name}} :"
+                                   f" {{artist}}\nor\n{pref}song {{song name}}```")
 
         elif text.startswith(pref + "artist"):
             # Прислать информацию о запрошенном музыкальном исполнителе
             args = text.split()
             if len(args) > 1:
-                for item in artist(text.split()[1:]):
-                    await channel.send(item)
+                if args[1] == "help":
+                    await channel.send(f"```{pref}artist {{artist}}```")
+                else:
+                    for item in artist(text.split()[1:]):
+                        await channel.send(item)
             else:
-                await channel.send("```Wrong artist name.\n.artist {artist}```")
+                await channel.send(f"```Wrong artist name.\n{pref}artist {{artist}}```")
 
         elif text.startswith(pref + "tree"):
             # Построить бинарное дерево (небалансированное и сбалансированное)
             args = text.split()
             if len(args) > 1:
-                f = False
-                for i in args[1:]:
-                    if not isfloat(i):
-                        f = True
-                        break
+                if args[1] == "help":
+                    await channel.send(f"{pref}tree {{numbers,}}")
                 else:
-                    for item in tree(args[1:]):
-                        await channel.send(item)
-                if f:
-                    await channel.send("```Arguments are not all numbers```")
+                    f = False
+                    for i in args[1:]:
+                        if not isfloat(i):
+                            f = True
+                            break
+                    else:
+                        for item in tree(args[1:]):
+                            await channel.send(item)
+                    if f:
+                        await channel.send(f"```Arguments are not all numbers.\n{pref}tree {{numbers}}```")
             else:
-                await channel.send("```No arguments to create a binary tree```")
+                await channel.send(f"```No arguments to create a binary tree.\n{pref}tree {{numbers}}```")
 
         elif text.startswith(pref + "lichess"):
             # Делает запрос к lichess
             args = text.split()
             if len(args) > 1:
-                if args[1] == "user" and len(args) > 2:
+                if args[1] == "help":
+                    await channel.send(f"```{pref}lichess user {{username}}```")
+                elif args[1] == "user" and len(args) > 2:
                     # Запрос о пользователе
                     await channel.send(liuser(args[2]))
+                else:
+                    await channel.send(f"```There is no command named {args[1]}.\n"
+                                       f"{pref}lichess help```")
             else:
-                await channel.send("```No arguments to create a binary tree```")
+                await channel.send(f"```No command was written.\n"
+                                   f"{pref}lichess help```")
 
         elif text.startswith(pref + "savechat"):
             # Сохраняет последние N сообщений из чата
             args = text.split()
-            if len(args) > 1 and args[1].isdigit():
-                await savechat(channel, int(args[1]))
+            if len(args) > 1:
+                if args[1] == "help":
+                    await channel.send(f"```{pref}savechat {{limit}}```")
+                elif args[1].isdigit():
+                    await savechat(channel, int(args[1]))
+                else:
+                    await channel.send(f"```Limit argument should be an integer.\n{pref}savechat {{limit=1000}}```")
             else:
                 await savechat(channel)
 
@@ -220,6 +285,8 @@ async def on_message(message):
             # Случайная gif-картинка канеки
             args = text.split()
             if len(args) > 1 and args[1].isdigit():
+                if args[1] == "help":
+                    await channel.send(f"```{pref}ima_ghoul {{Limit=30}}\n{pref}i_am_a_ghoul {{Limit=30}}```")
                 await channel.send(ima_ghoul(int(args[1])))
             else:
                 await channel.send(ima_ghoul())
@@ -227,39 +294,46 @@ async def on_message(message):
         elif text.startswith(pref + "ss"):
             # Перевод между системами счисления
             args = text.split()
+            if len(args) > 1 and args[1] == "help":
+                await channel.send(f"```{pref}ss {{ss1}} {{ss2}} {{number}}```")
             if len(args) == 4 and args[1].isdigit() and 1 < int(args[1]) < 36 \
                     and args[2].isdigit() and 1 < int(args[2]) < 36:
                 await channel.send(ss(int(args[1]), int(args[2]), args[3]))
             else:
-                await channel.send("`СОСИ ЖЁПУ!!11!1!11`")
+                await channel.send(f"```Not enough arguments.\n{pref}ss {{ss1}} {{ss2}} {{number}}```")
 
-        elif text.startswith(pref + "bincode") or text.startswith(pref + "bin_code"):
+        elif text.startswith(pref + "bincode"):
             # Двоичный код числа
             args = text.split()
-            if len(args) > 1 and isint(args[1]):
-                if len(args) > 2:
-                    responce = bin_code(int(args[1]), int(args[2]))
-                    if responce is not None:
-                        await channel.send(f"```"
-                                           f"Прямой код: {responce[0]}\n"
-                                           f"Обратный код: {responce[1]}\n"
-                                           f"Дополнительный код: {responce[2]}"
-                                           f"```")
+            if len(args) > 1:
+                if args[1] == "help":
+                    await channel.send(f"```{pref}bincode {{number}} {{bits=8}}```")
+                elif isint(args[1]):
+                    if len(args) > 2:
+                        responce = bin_code(int(args[1]), int(args[2]))
+                        if responce is not None:
+                            await channel.send(f"```"
+                                               f"Normal form: {responce[0]}\n"
+                                               f"Ones' complement: {responce[1]}\n"
+                                               f"Two’s complement: {responce[2]}"
+                                               f"```")
+                        else:
+                            await channel.send(f"```Your number isn't in range [{2 ** (int(args[2]) - 1) - 1};"
+                                               f"{-(2 ** (int(args[2]) - 1))}]```")
                     else:
-                        await channel.send(f"```Ваше число вне диапазона [{2 ** (int(args[2]) - 1) - 1};"
-                                           f"{-(2 ** (int(args[2]) - 1))}]```")
+                        responce = bin_code(int(args[1]))
+                        if responce is not None:
+                            await channel.send(f"```"
+                                               f"Normal form: {responce[0]}\n"
+                                               f"Ones' complement: {responce[1]}\n"
+                                               f"Two’s complement: {responce[2]}"
+                                               f"```")
+                        else:
+                            await channel.send("```Your number isn't in range [127;-128].```")
                 else:
-                    responce = bin_code(int(args[1]))
-                    if responce is not None:
-                        await channel.send(f"```"
-                                           f"Прямой код: {responce[0]}\n"
-                                           f"Обратный код: {responce[1]}\n"
-                                           f"Дополнительный код: {responce[2]}"
-                                           f"```")
-                    else:
-                        await channel.send("Ваше число вне диапазона [127;-128]")
+                    await channel.send(f"```The argument isn't a number.\n{pref}bincode {{number}} {{bits=8}}```")
             else:
-                await channel.send("`СОСИ ЖЁПУ!!11!1!11`")
+                await channel.send(f"```Not enough arguments.\n{pref}bincode {{number}} {{bits=8}}```")
 
         elif text.startswith(pref + "in_to_post") or text.startswith(pref + "in2post"):
             # Перевод из инфиксной в постфиксную форму
@@ -268,13 +342,17 @@ async def on_message(message):
                 text = text.replace(i, " " + i + " ")
             args = text.split()
             if len(args) > 1:
+                if args[1] == "help":
+                    await channel.send(f"```{pref}in2post {{expression}}\n{pref}in_to_post {{expression}}```")
                 responce = infix_to_postfix(" ".join(args[1:]))
                 if responce is not None:
                     await channel.send(responce)
                 else:
-                    await channel.send("`СОСИ ЖЁПУ!!11!1!11`")
+                    await channel.send(f"```No response received.\n{pref}in2post {{expression}}"
+                                       f"\n{pref}in_to_post {{expression}}```")
             else:
-                await channel.send("`СОСИ ЖЁПУ!!11!1!11`")
+                await channel.send(f"```No expression was given.\n{pref}in2post {{expression}}"
+                                   f"\n{pref}in_to_post {{expression}}```")
 
         elif text.startswith(pref + "post"):
             # Вычиление в постфиксной форме
@@ -283,11 +361,15 @@ async def on_message(message):
                 text = text.replace(i, " " + i + " ")
             args = text.split()
             if len(args) > 1:
+                if args[1] == "help":
+                    await channel.send(f"```{pref}post {{expression}}```")
                 responce = post(args[1:])
                 if responce is not None:
                     await channel.send(responce)
                 else:
-                    await channel.send("`СОСИ ЖЁПУ!!11!1!11`")
+                    await channel.send(f"```No response received.\n{pref}post {{expression}}```")
+            else:
+                await channel.send(f"```No expression was given.\n{pref}post {{expression}}```")
 
         elif text.startswith(pref + "pref"):
             # Вычиление в префиксной форме
@@ -300,16 +382,25 @@ async def on_message(message):
                 if responce is not None:
                     await channel.send(responce)
                 else:
-                    await channel.send("`СОСИ ЖЁПУ!!11!1!11`")
+                    await channel.send(f"```No response received.\n{pref}pref {{expression}}```")
+            else:
+                await channel.send(f"```No expression was given.\n{pref}pref {{expression}}```")
 
         elif text.startswith(pref + "wiki"):
             # Запрос из википедии
             args = text.split()
             if len(args) > 1:
-                for item in pprint(wiki(" ".join(args[1:]))):
-                    await channel.send(item)
+                if args[1] == "help" and len(args) == 2:
+                    await channel.send(f"```{pref}wiki {{object}}```")
+                obj = " ".join(args[1:])
+                try:
+                    w = wiki(obj)
+                    for item in prettyprint(w):
+                        await channel.send(item)
+                except:
+                    await channel.send(f'```No such article article was found: "{obj}".```')
             else:
-                await channel.send("`СОСИ ЖЁПУ!!11!1!11`")
+                await channel.send("```No arguments were given.\n{pref}wiki {{object}}```")
 
         elif text.startswith(pref + "list"):
             # Списки
@@ -318,31 +409,31 @@ async def on_message(message):
                 if args[2] == "create":
                     await channel.send(create_list(args[1], _usr, args[3]))
                 elif args[2] == "add":
-                    await channel.send(add_to_list((args[1], _usr, args[3:])))
+                    await channel.send(add_to_list((args[1], _usr, " ".join(args[3:]))))
                 elif args[2] == "remove":
-                    await channel.send(remove_list(args[1], args[3:], _usr))
+                    await channel.send(remove_list(args[1], " ".join(args[3:]), _usr))
                 elif args[2] == "removeat":
                     await channel.send(removeat_list(args[1], int(args[3]), _usr))
                 elif args[2] == "insert":
-                    await channel.send(insert_list(args[1], int(args[3]), args[4], _usr))
+                    await channel.send(insert_list(args[1], int(args[3]), " ".join(args[4:]), _usr))
                 elif args[2] == "delete":
                     await channel.send(delete_list(args[1], _usr))
                 elif args[2] == "author":
                     await channel.send(get_list_author(args[1]))
             else:
                 if args[1] == "help":
-                    await channel.send("""```.list {listname} create  {args}
-.list {listname} add  {args}
-.list {listname} remove  {arg}
-.list {listname} removeat  {ind}
-.list {listname} insert  {ind} {arg}
-.list {listname} delete
-.list {listname} author
-.list {listname}```""")
+                    await channel.send(f"```{pref}list {{listname}} create {{args}}\n"
+                                       f"{pref}list {{listname}} add {{arg}}\n"
+                                       f"{pref}list {{listname}} remove {{arg}}\n"
+                                       f"{pref}list {{listname}} removeat {{ind}}\n"
+                                       f"{pref}list {{listname}} insert {{ind}} {{arg}}\n"
+                                       f"{pref}list {{listname}} delete\n"
+                                       f"{pref}list {{listname}} author\n"
+                                       f"{pref}list {{listname}}```")
                 else:
                     _, lst = read_list(args[1])
                     outp = args[1] + ":\n\n" + "\n".join([f"{ind + 1}. {i}" for ind, i in enumerate(lst)])
-                    for item in pprint(outp):
+                    for item in prettyprint(outp):
                         await channel.send(item)
 
 
@@ -351,18 +442,18 @@ def latency():
     return f"Latency: {round(client.latency * 1000)} ms"
 
 
-async def stop(channel):
-    # Закончить сессию
-    await channel.purge(limit=1)
-    await client.close()
-
-
 async def clear(channel, amount=100):
     # Очистить первык N сообщений
     try:
         await channel.purge(limit=(amount + 1))
     except Exception as e:
         print(e)
+
+
+async def stop(channel):
+    # Закончить сессию
+    await channel.purge(limit=1)
+    await client.close()
 
 
 def song(songinfo):
@@ -380,14 +471,14 @@ def song(songinfo):
         songname = sng.title
         lyr = sng.lyrics
         yield f"`Text from {songname} by {artistname}:`"
-        for i in pprint(lyr):
+        for i in prettyprint(lyr):
             yield i
         yield f"Write to Rythm: \n`" \
               f"!p {VideosSearch(sng.title + ' ' + sng.artist, limit=1).result()['result'][0]['link']}`"
 
     except Exception as e:
         print(e)
-        yield "```Wrong song or name.\n.song {song name} : {artist}\nor\n.song {song name}```"
+        yield "```Wrong song or artist name.\n.song {song name} : {artist}\nor\n.song {song name}```"
 
 
 def artist(artistname):
@@ -408,7 +499,7 @@ def artist(artistname):
                         for i, sng in enumerate(songs)])
         if tt:
             outp = f"Most popular songs by {artistname}:\n\n{tt}"
-            for i in pprint(outp):
+            for i in prettyprint(outp):
                 yield i
         else:
             yield "```Wrong artist name.\n.artist {artist}```"
@@ -428,13 +519,13 @@ def tree(keys):
     outp1 = ""
     for i in b1.display():
         outp1 += "\n" + i
-    for i in pprint(outp1):
+    for i in prettyprint(outp1):
         yield i
     outp2 = ""
     for i in b2.display():
         outp2 += "\n" + i
     if outp1 != outp2:
-        for i in pprint(outp2):
+        for i in prettyprint(outp2):
             yield i
 
 
